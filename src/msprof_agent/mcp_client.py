@@ -1,0 +1,188 @@
+"""MCP client for MSProf Agent."""
+
+import asyncio
+import json
+import logging
+from contextlib import AsyncExitStack
+from typing import Any
+
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from rich.console import Console
+
+from .config import MCPConfig
+
+console = Console()
+logger = logging.getLogger(__name__)
+
+
+class MCPClient:
+    """MCP client for connecting to MCP servers via stdio."""
+    
+    def __init__(self, config: MCPConfig):
+        self.config = config
+        self.session: ClientSession | None = None
+        self.exit_stack = AsyncExitStack()
+        self._tools: list[dict] = []
+        self._connected = False
+    
+    @property
+    def name(self) -> str:
+        return self.config.name
+    
+    @property
+    def is_connected(self) -> bool:
+        return self._connected
+    
+    async def connect(self) -> bool:
+        """Connect to the MCP server."""
+        try:
+            server_params = StdioServerParameters(
+                command=self.config.command,
+                args=self.config.args,
+                env={**self.config.env} if self.config.env else None,
+            )
+            
+            stdio_transport = await self.exit_stack.enter_async_context(
+                stdio_client(server_params)
+            )
+            stdio, write = stdio_transport
+            self.session = await self.exit_stack.enter_async_context(
+                ClientSession(stdio, write)
+            )
+            
+            await self.session.initialize()
+            self._connected = True
+            
+            # Fetch available tools
+            await self._fetch_tools()
+            
+            console.print(f"[green]✓[/green] Connected to MCP server: {self.config.name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to connect to MCP server {self.config.name}: {e}")
+            console.print(f"[yellow]⚠[/yellow] Failed to connect to MCP server {self.config.name}: {e}")
+            return False
+    
+    async def _fetch_tools(self) -> None:
+        """Fetch available tools from the MCP server."""
+        if not self.session:
+            return
+        
+        try:
+            response = await self.session.list_tools()
+            self._tools = []
+            for tool in response.tools:
+                self._tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description or "",
+                        "parameters": tool.inputSchema,
+                    }
+                })
+            logger.info(f"Loaded {len(self._tools)} tools from {self.config.name}")
+        except Exception as e:
+            logger.error(f"Failed to fetch tools from {self.config.name}: {e}")
+    
+    def get_tools(self) -> list[dict]:
+        """Get available tools from this MCP server."""
+        return self._tools
+    
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> str:
+        """Call a tool on the MCP server."""
+        if not self.session or not self._connected:
+            return "Error: Not connected to MCP server"
+        
+        try:
+            result = await self.session.call_tool(tool_name, arguments=arguments)
+            
+            # Extract text content from result
+            contents = []
+            for content in result.content:
+                if content.type == "text":
+                    contents.append(content.text)
+                elif content.type == "image":
+                    contents.append(f"[Image: {content.mimeType}]")
+            
+            return "\n".join(contents) if contents else "Tool executed successfully"
+            
+        except Exception as e:
+            logger.error(f"Failed to call tool {tool_name}: {e}")
+            return f"Error calling tool {tool_name}: {e}"
+    
+    async def disconnect(self) -> None:
+        """Disconnect from the MCP server."""
+        if self._connected:
+            await self.exit_stack.aclose()
+            self._connected = False
+            self.session = None
+            console.print(f"[dim]Disconnected from MCP server: {self.config.name}[/dim]")
+
+
+class MCPManager:
+    """Manages multiple MCP clients."""
+    
+    def __init__(self):
+        self.clients: dict[str, MCPClient] = {}
+    
+    async def add_server(self, config: MCPConfig) -> bool:
+        """Add and connect to an MCP server."""
+        client = MCPClient(config)
+        if await client.connect():
+            self.clients[config.name] = client
+            return True
+        return False
+    
+    async def remove_server(self, name: str) -> bool:
+        """Remove and disconnect from an MCP server."""
+        if name in self.clients:
+            await self.clients[name].disconnect()
+            del self.clients[name]
+            return True
+        return False
+    
+    def get_all_tools(self) -> list[dict]:
+        """Get all tools from all connected MCP servers."""
+        all_tools = []
+        for client in self.clients.values():
+            if client.is_connected:
+                tools = client.get_tools()
+                # Add server prefix to tool names to avoid conflicts
+                for tool in tools:
+                    tool_copy = json.loads(json.dumps(tool))  # Deep copy
+                    original_name = tool_copy["function"]["name"]
+                    tool_copy["function"]["name"] = f"{client.name}__{original_name}"
+                    all_tools.append(tool_copy)
+        return all_tools
+    
+    async def call_tool(self, full_tool_name: str, arguments: dict[str, Any]) -> str:
+        """Call a tool by its full name (server__tool_name)."""
+        if "__" not in full_tool_name:
+            return f"Error: Invalid tool name format: {full_tool_name}"
+        
+        server_name, tool_name = full_tool_name.split("__", 1)
+        
+        if server_name not in self.clients:
+            return f"Error: MCP server '{server_name}' not found"
+        
+        client = self.clients[server_name]
+        if not client.is_connected:
+            return f"Error: MCP server '{server_name}' is not connected"
+        
+        return await client.call_tool(tool_name, arguments)
+    
+    def get_connected_servers(self) -> list[str]:
+        """Get list of connected server names."""
+        return [name for name, client in self.clients.items() if client.is_connected]
+    
+    async def disconnect_all(self) -> None:
+        """Disconnect from all MCP servers."""
+        for client in self.clients.values():
+            await client.disconnect()
+        self.clients.clear()
+
+
+# Global MCP manager instance
+mcp_manager = MCPManager()

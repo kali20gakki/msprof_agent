@@ -1,0 +1,35 @@
+{
+  "llm": {
+    "provider": "openai",
+    "api_key": "sk-83ebf0ecded644cab66eb3eabd3951ce",
+    "base_url": "http://127.0.0.1:8045/v1",
+    "model": "gemini-3-flash",
+    "temperature": 0,
+    "max_tokens": 200000
+  },
+  "mcp_servers": [
+    {
+      "name": "filesystem",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/path/to/allowed/directory"
+      ],
+      "env": {},
+      "enabled": true
+    },
+    {
+      "name": "sqlite",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sqlite",
+        "/path/to/database.db"
+      ],
+      "env": {},
+      "enabled": false
+    }
+  ],
+  "theme": "dark"
+}
