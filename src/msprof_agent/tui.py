@@ -7,6 +7,7 @@ from rich.markdown import Markdown as RichMarkdown
 from rich.align import Align
 from rich.console import RenderableType
 from rich.text import Text
+from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll, Vertical
 from textual.reactive import reactive
@@ -64,47 +65,46 @@ class MessageWidget(Container):
 
     .actions {
         width: auto;
-        display: none;
     }
     
-    MessageWidget:hover .actions {
-        display: block;
-    }
+    /* Removed hover logic to make buttons always visible */
 
     .action-btn {
-        background: transparent;
+        background: #4c566a;
         border: none;
-        color: $text-muted;
-        min-width: 6;
+        color: #eceff4;
         height: 1;
-        padding: 0;
+        min-width: 6;
+        padding: 0 1;
         margin-left: 1;
+        text-align: center;
     }
     
     .action-btn:hover {
-        color: $accent;
+        background: #88c0d0;
+        color: #2e3440;
         text-style: bold;
-        background: transparent;
     }
 
     .content-area {
         height: auto;
         min-height: 1;
-        color: $text;
+        color: #eceff4;
+        padding-top: 1;
     }
     
-    /* 可选择的文本区域 - 默认显示 */
+    /* 可选择的文本区域 */
     .selectable-text {
         height: auto;
         border: none;
         background: transparent;
         padding: 0;
-        color: $text;
+        color: #eceff4;
     }
     
     .selectable-text:focus {
-        border: solid $accent;
-        background: $surface;
+        border: solid #88c0d0;
+        background: #2e3440;
     }
     
     .hidden {
@@ -142,9 +142,13 @@ class MessageWidget(Container):
             with Horizontal(classes="header-row"):
                 yield Static(" ", classes="role-label")
                 with Horizontal(classes="actions"):
-                    yield Button("Copy", id="copy-btn", classes="action-btn")
+                    yield Label("Copy", id="copy-btn", classes="action-btn")
+                    yield Label("Raw", id="raw-btn", classes="action-btn")
             
-            # 默认使用可选择的 TextArea 显示内容
+            # Markdown 渲染视图（默认隐藏，流式输出完成后显示）
+            yield Static(RichMarkdown(self.content), id="render-md", classes="content-area hidden")
+            
+            # 纯文本视图（默认显示，用于流式输出和复制）
             yield TextArea(
                 self.content, 
                 id="content-text", 
@@ -157,6 +161,8 @@ class MessageWidget(Container):
         """Update the message content."""
         self.content = content
         self.query_one("#content-text", TextArea).text = content
+        # 同时更新 Markdown 内容，以备切换
+        self.query_one("#render-md", Static).update(RichMarkdown(content))
     
     def update_content_fast(self, content: str) -> None:
         """快速更新内容（流式输出时使用）"""
@@ -164,15 +170,35 @@ class MessageWidget(Container):
         self.query_one("#content-text", TextArea).text = content
     
     def finalize_content(self) -> None:
-        """完成内容更新"""
-        # TextArea 已经包含最终内容，无需额外操作
-        pass
+        """流式输出完成，切换到美观的 Markdown 渲染模式"""
+        # 更新 Markdown 视图
+        self.query_one("#render-md", Static).update(RichMarkdown(self.content))
+        
+        # 切换视图：隐藏文本框，显示 Markdown
+        self.query_one("#content-text", TextArea).add_class("hidden")
+        self.query_one("#render-md", Static).remove_class("hidden")
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle button presses."""
-        if event.button.id == "copy-btn":
+    def on_click(self, event: events.Click) -> None:
+        """Handle click events."""
+        if event.widget.id == "copy-btn":
             self.app.copy_to_clipboard(self.content)
             self.app.notify("Copied to clipboard", severity="information")
+        elif event.widget.id == "raw-btn":
+            md_widget = self.query_one("#render-md", Static)
+            text_widget = self.query_one("#content-text", TextArea)
+            btn = event.widget
+            
+            if "hidden" in text_widget.classes:
+                # 切换到纯文本模式（可选择）
+                text_widget.remove_class("hidden")
+                md_widget.add_class("hidden")
+                # Label 不支持直接修改 label 属性，使用 update
+                btn.update("View")
+            else:
+                # 切换回 Markdown 渲染模式
+                text_widget.add_class("hidden")
+                md_widget.remove_class("hidden")
+                btn.update("Raw")
 
 
 class ChatWelcomeBanner(Static):
@@ -241,13 +267,13 @@ class InputArea(Container):
         height: auto;
         min-height: 3;
         margin: 1 0;
-        border: solid #6e7a8e;
+        border: solid #d8dee9;
+        background: #2e3440;
         padding: 0;
-        background: $surface;
     }
     
     InputArea:focus-within {
-        border: solid $accent;
+        border: solid #88c0d0;
     }
     
     .input-row {
@@ -256,17 +282,18 @@ class InputArea(Container):
     }
     
     .prompt-label {
-        width: 2;
+        width: 3;
         padding-left: 1;
-        color: $accent;
+        color: #88c0d0;
         text-style: bold;
-        align-vertical: middle;
+        content-align: center middle;
     }
     
     Input {
         width: 1fr;
-        background: transparent;
+        background: #2e3440;
         border: none;
+        color: #eceff4;
         padding: 0 1;
         height: 1;
     }
@@ -524,14 +551,14 @@ class MSProfApp(App):
     
     CSS = """
     /* Theme Variables */
-    $accent: #d08770;
+    $accent: #88c0d0;
     $success: #a3be8c;
     $warning: #ebcb8b;
-    $secondary: #88c0d0;
-    $background: #1e1e1e;
-    $surface: #262626;
+    $secondary: #81a1c1;
+    $background: #121212;
+    $surface: #2e3440;
     $text: #eceff4;
-    $text-muted: #6e7a8e;
+    $text-muted: #d8dee9;
     
     Screen {
         background: $background;
@@ -541,12 +568,13 @@ class MSProfApp(App):
     #main-container {
         width: 100%;
         height: 1fr;
-        padding: 1 4;
+        padding: 1 2;
     }
     
     #chat-area {
         height: 1fr;
         margin-bottom: 1;
+        background: $background;
     }
     """
     
