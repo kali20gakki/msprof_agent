@@ -9,26 +9,15 @@
   },
   "mcp_servers": [
     {
-      "name": "filesystem",
-      "command": "npx",
+      "name": "msprof-mcp",
+      "command": "uv",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/path/to/allowed/directory"
+        "tool",
+        "run",
+        "msprof-mcp"
       ],
       "env": {},
       "enabled": true
-    },
-    {
-      "name": "sqlite",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sqlite",
-        "/path/to/database.db"
-      ],
-      "env": {},
-      "enabled": false
     }
   ],
   "theme": "dark"

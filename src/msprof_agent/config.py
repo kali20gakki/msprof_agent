@@ -34,6 +34,18 @@ class MCPConfig(BaseModel):
     enabled: bool = True
 
 
+def get_default_mcp_servers() -> list[MCPConfig]:
+    """Get default MCP servers."""
+    return [
+        MCPConfig(
+            name="msprof-mcp",
+            command="uv",
+            args=["tool", "run", "msprof-mcp"],
+            enabled=True
+        )
+    ]
+
+
 class AppConfig(BaseSettings):
     """Application configuration."""
     
@@ -41,7 +53,7 @@ class AppConfig(BaseSettings):
     llm: LLMConfig = Field(default_factory=LLMConfig)
     
     # MCP Servers Configuration
-    mcp_servers: list[MCPConfig] = Field(default_factory=list)
+    mcp_servers: list[MCPConfig] = Field(default_factory=get_default_mcp_servers)
     
     # UI Configuration
     theme: Literal["dark", "light"] = "dark"

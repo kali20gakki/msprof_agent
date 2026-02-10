@@ -149,7 +149,7 @@ class MessageWidget(Container):
             yield Static(RichMarkdown(self.content), id="render-md", classes="content-area hidden")
             
             # 纯文本视图（默认显示，用于流式输出和复制）
-            yield TextArea(
+            yield CopyableTextArea(
                 self.content, 
                 id="content-text", 
                 read_only=True, 
@@ -160,14 +160,14 @@ class MessageWidget(Container):
     def update_content(self, content: str) -> None:
         """Update the message content."""
         self.content = content
-        self.query_one("#content-text", TextArea).text = content
+        self.query_one("#content-text", CopyableTextArea).text = content
         # 同时更新 Markdown 内容，以备切换
         self.query_one("#render-md", Static).update(RichMarkdown(content))
     
     def update_content_fast(self, content: str) -> None:
         """快速更新内容（流式输出时使用）"""
         self.content = content
-        self.query_one("#content-text", TextArea).text = content
+        self.query_one("#content-text", CopyableTextArea).text = content
     
     def finalize_content(self) -> None:
         """流式输出完成，切换到美观的 Markdown 渲染模式"""
@@ -175,17 +175,22 @@ class MessageWidget(Container):
         self.query_one("#render-md", Static).update(RichMarkdown(self.content))
         
         # 切换视图：隐藏文本框，显示 Markdown
-        self.query_one("#content-text", TextArea).add_class("hidden")
+        self.query_one("#content-text", CopyableTextArea).add_class("hidden")
         self.query_one("#render-md", Static).remove_class("hidden")
 
     def on_click(self, event: events.Click) -> None:
         """Handle click events."""
         if event.widget.id == "copy-btn":
-            self.app.copy_to_clipboard(self.content)
-            self.app.notify("Copied to clipboard", severity="information")
+            try:
+                import pyperclip
+                pyperclip.copy(self.content)
+                self.app.notify("Copied to clipboard", severity="information")
+            except Exception:
+                self.app.copy_to_clipboard(self.content)
+                self.app.notify("Copied (fallback)", severity="information")
         elif event.widget.id == "raw-btn":
             md_widget = self.query_one("#render-md", Static)
-            text_widget = self.query_one("#content-text", TextArea)
+            text_widget = self.query_one("#content-text", CopyableTextArea)
             btn = event.widget
             
             if "hidden" in text_widget.classes:
@@ -199,6 +204,28 @@ class MessageWidget(Container):
                 text_widget.add_class("hidden")
                 md_widget.remove_class("hidden")
                 btn.update("Raw")
+
+
+class CopyableTextArea(TextArea):
+    """TextArea with copy support."""
+    
+    BINDINGS = [
+        Binding("ctrl+c", "copy_selection", "Copy", show=False),
+    ]
+    
+    def action_copy_selection(self) -> None:
+        """Copy selected text to clipboard."""
+        if self.selected_text:
+            try:
+                import pyperclip
+                pyperclip.copy(self.selected_text)
+                self.app.notify("Selection copied", severity="information")
+            except Exception:
+                self.app.copy_to_clipboard(self.selected_text)
+                self.app.notify("Selection copied", severity="information")
+        else:
+            # If nothing selected, maybe quit? No, better safe than sorry.
+            self.app.notify("No text selected", severity="warning")
 
 
 class ChatWelcomeBanner(Static):
@@ -234,7 +261,7 @@ class CustomFooter(Static):
     """
     
     def render(self) -> str:
-        return "! for bash mode • / for commands • tab to undo • ⏎ for newline"
+        return "! for bash mode • / for commands • ⌥+Select to copy • ⏎ for newline"
 
 
 class ChatArea(VerticalScroll):
@@ -343,9 +370,20 @@ class WelcomeScreen(Screen):
         text-align: left;
     }
     
-    .key-highlight {
-        color: $text;
-        text-style: bold;
+    .status-text {
+        color: $warning;
+        text-align: center;
+        margin-top: 1;
+    }
+    
+    LoadingIndicator {
+        height: 1;
+        margin: 1 0;
+        color: $accent;
+    }
+    
+    .hidden {
+        display: none;
     }
     """
     
@@ -367,11 +405,39 @@ class WelcomeScreen(Screen):
             yield Label("✱ Welcome to msAgent", classes="welcome-box")
             yield Static(ascii_text, classes="ascii-art")
             
+            # Loading state components
+            yield LoadingIndicator(id="loading")
+            yield Label("Initializing agent and MCP tools...", id="status-text", classes="status-text")
+            
+            # Ready state component (initially hidden)
             t = Text.from_markup("Press [bold white]Enter[/bold white] to continue")
-            yield Label(t, classes="continue-text")
+            yield Label(t, id="continue-text", classes="continue-text hidden")
+            
+    async def on_mount(self) -> None:
+        """Start initialization when screen mounts."""
+        self.run_worker(self._initialize_agent(), exclusive=True)
+        
+    async def _initialize_agent(self) -> None:
+        """Initialize the agent in background."""
+        try:
+            # Initialize agent
+            await self.app.agent.initialize()
+            
+            # Update UI
+            self.query_one("#loading").add_class("hidden")
+            self.query_one("#status-text").add_class("hidden")
+            self.query_one("#continue-text").remove_class("hidden")
+            
+            self.is_ready = True
+            
+        except Exception as e:
+            # Show error
+            self.query_one("#loading").add_class("hidden")
+            self.query_one("#status-text").update(f"❌ Error: {e}")
             
     def action_continue(self) -> None:
-        self.app.push_screen(ChatScreen())
+        if getattr(self, "is_ready", False):
+            self.app.push_screen(ChatScreen())
 
 
 class ChatScreen(Screen):
@@ -575,8 +641,7 @@ class MSProfApp(App):
         super().__init__(**kwargs)
         
     async def on_mount(self) -> None:
-        # Initialize agent centrally
-        await self.agent.initialize()
+        # Initialize agent is now handled in WelcomeScreen
         # Push welcome screen
         self.push_screen(WelcomeScreen())
 

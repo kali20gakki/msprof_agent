@@ -54,7 +54,10 @@ def chat_command(
     
     async def do_chat():
         agent = Agent()
-        initialized = await agent.initialize()
+        
+        # Initialize agent with spinner
+        with console.status("[bold green]Initializing agent and loading MCP servers...[/bold green]", spinner="dots"):
+            initialized = await agent.initialize()
         
         if not initialized:
             console.print(Panel(
@@ -79,9 +82,16 @@ def chat_command(
                     console.print(response)
             else:
                 # Interactive mode
+                mcp_servers = agent.mcp_manager.get_connected_servers()
+                if mcp_servers:
+                    server_list = ", ".join([f"[cyan]{s}[/cyan]" for s in mcp_servers])
+                    mcp_msg = f"\n\n[dim]🔌 Connected MCP Servers: {server_list}[/dim]"
+                else:
+                    mcp_msg = "\n\n[dim]⚠️ No MCP servers connected[/dim]"
+
                 console.print(Panel(
                     "[bold green]🤖 msAgent[/bold green] - Interactive Mode\n"
-                    "Type your message and press Enter. Use [bold]/help[/bold] for commands.",
+                    "Type your message and press Enter. Use [bold]/help[/bold] for commands." + mcp_msg,
                     border_style="green"
                 ))
                 
