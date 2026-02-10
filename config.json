@@ -10,12 +10,8 @@
   "mcp_servers": [
     {
       "name": "msprof-mcp",
-      "command": "uv",
-      "args": [
-        "tool",
-        "run",
-        "msprof-mcp"
-      ],
+      "command": "msprof-mcp",
+      "args": [],
       "env": {},
       "enabled": true
     }

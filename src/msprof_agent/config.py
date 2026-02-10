@@ -39,8 +39,8 @@ def get_default_mcp_servers() -> list[MCPConfig]:
     return [
         MCPConfig(
             name="msprof-mcp",
-            command="uv",
-            args=["tool", "run", "msprof-mcp"],
+            command="msprof-mcp",
+            args=[],
             enabled=True
         )
     ]

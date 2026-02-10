@@ -18,6 +18,7 @@ dependencies = [
     "anyio>=4.2.0",
     "mcp>=1.0.0",
     "pyperclip>=1.11.0",
+    "msprof-mcp",  # 添加 msprof-mcp 作为依赖
 ]
 
 [project.scripts]
