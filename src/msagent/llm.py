@@ -1,4 +1,4 @@
-"""LLM client for MSProf Agent."""
+"""LLM client for msagent."""
 
 from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator

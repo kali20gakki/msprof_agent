@@ -1,6 +1,6 @@
-# MSProf Agent Examples
+# msagent Examples
 
-This directory contains example files for MSProf Agent.
+This directory contains example files for msagent.
 
 ## Simple MCP Server
 
@@ -15,16 +15,16 @@ This directory contains example files for MSProf Agent.
 
 ### Usage
 
-1. Add the server to MSProf Agent:
+1. Add the server to msagent:
 
 ```bash
-msprof mcp add --name calculator --command python --args "/path/to/simple_mcp_server.py"
+msagent mcp add --name calculator --command python --args "/path/to/simple_mcp_server.py"
 ```
 
 2. Start chatting:
 
 ```bash
-msprof chat
+msagent chat
 ```
 
 3. Ask the agent to use the calculator:
@@ -42,19 +42,19 @@ You can also use official MCP servers from the community:
 ### Filesystem Server
 
 ```bash
-msprof mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/path/to/directory"
+msagent mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/path/to/directory"
 ```
 
 ### SQLite Server
 
 ```bash
-msprof mcp add --name sqlite --command npx --args "-y,@modelcontextprotocol/server-sqlite,/path/to/database.db"
+msagent mcp add --name sqlite --command npx --args "-y,@modelcontextprotocol/server-sqlite,/path/to/database.db"
 ```
 
 ### Git Server
 
 ```bash
-msprof mcp add --name git --command uvx --args "mcp-server-git"
+msagent mcp add --name git --command uvx --args "mcp-server-git"
 ```
 
 ## Creating Your Own MCP Server

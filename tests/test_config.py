@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from msprof_agent.config import ConfigManager, LLMConfig, MCPConfig, AppConfig
+from msagent.config import ConfigManager, LLMConfig, MCPConfig, AppConfig
 
 
 class TestConfigManager:

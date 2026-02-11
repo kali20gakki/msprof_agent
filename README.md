@@ -118,11 +118,11 @@ msagent mcp add --name myserver --command python --args "/path/to/server.py"
 ## 📁 项目结构
 
 ```
-msprof-agent/
+msagent/
 ├── pyproject.toml          # 项目配置和依赖
 ├── README.md               # 项目文档
 ├── src/
-│   └── msprof_agent/
+│   └── msagent/
 │       ├── __init__.py     # 包初始化
 │       ├── cli.py          # CLI 命令接口
 │       ├── tui.py          # TUI 界面

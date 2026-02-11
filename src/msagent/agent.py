@@ -1,4 +1,4 @@
-"""Core agent logic for MSProf Agent."""
+"""Core agent logic for msagent."""
 
 import json
 from collections.abc import AsyncGenerator
@@ -15,7 +15,7 @@ console = Console()
 
 
 class Agent:
-    """MSProf Agent - Core agent implementation."""
+    """msagent - Core agent implementation."""
     
     def __init__(self, config: AppConfig | None = None):
         self.config = config or config_manager.get_config()
@@ -40,8 +40,8 @@ class Agent:
                 self._error_message = (
                     "⚠️ LLM not configured. Please set up your API key:\n"
                     "   • Environment: OPENAI_API_KEY, ANTHROPIC_API_KEY, or GEMINI_API_KEY\n"
-                    "   • Config file: ~/.config/msprof-agent/config.json\n"
-                    "   • Use: msprof config --help"
+                    "   • Config file: ~/.config/msagent/config.json\n"
+                    "   • Use: msagent config --help"
                 )
 
                 return False
@@ -66,7 +66,7 @@ class Agent:
         """Get the system prompt for the agent."""
         mcp_servers = mcp_manager.get_connected_servers()
         
-        prompt = """You are MSProf Agent, a helpful AI assistant that can use tools to help users.
+        prompt = """You are msagent, a helpful AI assistant that can use tools to help users.
 
 When you need to use a tool, respond with a tool call in the appropriate format.
 When you receive tool results, incorporate them into your response naturally.

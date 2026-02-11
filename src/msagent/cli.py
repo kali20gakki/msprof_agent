@@ -1,4 +1,4 @@
-"""CLI interface for MSProf Agent."""
+"""CLI interface for msagent."""
 
 import asyncio
 import json
@@ -318,7 +318,7 @@ def info_command() -> None:
   • Custom OpenAI-compatible APIs
 
 [bold]Configuration:[/bold]
-  Config file: ~/.config/msprof-agent/config.json
+  Config file: ~/.config/msagent/config.json
   
   Environment variables:
     • OPENAI_API_KEY / OPENAI_MODEL

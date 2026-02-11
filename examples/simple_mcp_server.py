@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Simple example MCP server for MSProf Agent.
+"""Simple example MCP server for msagent.
 
 This is a simple MCP server that provides basic calculator tools.
-To use with MSProf Agent:
+To use with msagent:
 
-    msprof mcp add --name calculator --command python --args "/path/to/simple_mcp_server.py"
+    msagent mcp add --name calculator --command python --args "/path/to/simple_mcp_server.py"
 
 """
 

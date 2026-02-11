@@ -1,4 +1,4 @@
-"""TUI interface for MSProf Agent using Textual."""
+"""TUI interface for msagent using Textual."""
 
 import asyncio
 from typing import Any
@@ -503,7 +503,7 @@ class ChatScreen(Screen):
             
     def send_message(self) -> None:
         """发送消息（同步启动，异步执行）"""
-        app: MSProfApp = self.app
+        app: MSAgentApp = self.app
         if app.is_processing:
             return
             
@@ -543,7 +543,7 @@ class ChatScreen(Screen):
     
     async def _process_message(self, message: str) -> None:
         """后台处理消息的 worker"""
-        app: MSProfApp = self.app
+        app: MSAgentApp = self.app
         chat_area = self.query_one("#chat-area", ChatArea)
         
         try:
@@ -626,8 +626,8 @@ class ChatScreen(Screen):
         await chat_area.add_message("system", message)
 
 
-class MSProfApp(App):
-    """MSProf Agent TUI Application."""
+class MSAgentApp(App):
+    """msagent TUI Application."""
     
     CSS = """
     /* Theme Variables */
@@ -688,5 +688,5 @@ class MSProfApp(App):
 
 def run_tui() -> None:
     """Run the TUI application."""
-    app = MSProfApp()
+    app = MSAgentApp()
     app.run()

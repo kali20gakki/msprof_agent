@@ -1,1 +1,1 @@
-"""Tests for MSProf Agent."""
+"""Tests for msagent."""

@@ -1,4 +1,4 @@
-"""MCP client for MSProf Agent."""
+"""MCP client for msagent."""
 
 import asyncio
 import json

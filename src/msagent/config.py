@@ -1,4 +1,4 @@
-"""Configuration management for MSProf Agent."""
+"""Configuration management for msagent."""
 
 import json
 import os
@@ -59,14 +59,14 @@ class AppConfig(BaseSettings):
     theme: Literal["dark", "light"] = "dark"
     
     class Config:
-        env_prefix = "MSPROF_"
+        env_prefix = "MSAGENT_"
         env_nested_delimiter = "__"
 
 
 class ConfigManager:
     """Manages configuration loading and saving."""
     
-    CONFIG_DIR = Path.home() / ".config" / "msprof-agent"
+    CONFIG_DIR = Path.home() / ".config" / "msagent"
     CONFIG_FILE = CONFIG_DIR / "config.json"
     
     def __init__(self):
