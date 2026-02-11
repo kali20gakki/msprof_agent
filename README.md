@@ -73,26 +73,26 @@ uv run msagent config --llm-provider anthropic --llm-api-key "your-key" --llm-mo
 
 ```bash
 # 列出 MCP 服务器
-msprof mcp list
+msagent mcp list
 
 # 添加 MCP 服务器
-msprof mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/path"
+msagent mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/path"
 
 # 移除 MCP 服务器
-msprof mcp remove --name filesystem
+msagent mcp remove --name filesystem
 ```
 
 ### 查看帮助
 
 ```bash
 # 显示帮助信息
-msprof --help
+msagent --help
 
 # 显示版本
-msprof --version
+msagent --version
 
 # 显示详细信息
-msprof info
+msagent info
 ```
 
 ## 🔌 MCP 服务器示例
@@ -100,19 +100,19 @@ msprof info
 ### 文件系统服务器
 
 ```bash
-msprof mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/home/user/documents"
+msagent mcp add --name filesystem --command npx --args "-y,@modelcontextprotocol/server-filesystem,/home/user/documents"
 ```
 
 ### SQLite 服务器
 
 ```bash
-msprof mcp add --name sqlite --command npx --args "-y,@modelcontextprotocol/server-sqlite,/path/to/database.db"
+msagent mcp add --name sqlite --command npx --args "-y,@modelcontextprotocol/server-sqlite,/path/to/database.db"
 ```
 
 ### 自定义 MCP 服务器
 
 ```bash
-msprof mcp add --name myserver --command python --args "/path/to/server.py"
+msagent mcp add --name myserver --command python --args "/path/to/server.py"
 ```
 
 ## 📁 项目结构
@@ -157,14 +157,14 @@ uv run ruff check .
 
 | 命令 | 描述 |
 |------|------|
-| `msprof chat [message]` | 启动聊天会话 |
-| `msprof ask <question>` | 单轮问答 |
-| `msprof config --show` | 查看配置 |
-| `msprof mcp list` | 列出 MCP 服务器 |
-| `msprof mcp add --name <n> --command <c>` | 添加 MCP 服务器 |
-| `msprof mcp remove --name <n>` | 移除 MCP 服务器 |
-| `msprof info` | 显示信息 |
-| `msprof --version` | 显示版本 |
+| `msagent chat [message]` | 启动聊天会话 |
+| `msagent ask <question>` | 单轮问答 |
+| `msagent config --show` | 查看配置 |
+| `msagent mcp list` | 列出 MCP 服务器 |
+| `msagent mcp add --name <n> --command <c>` | 添加 MCP 服务器 |
+| `msagent mcp remove --name <n>` | 移除 MCP 服务器 |
+| `msagent info` | 显示信息 |
+| `msagent --version` | 显示版本 |
 
 ## 🔗 相关链接
 
