@@ -71,6 +71,7 @@ class ConfigManager:
     
     def __init__(self):
         self._config: AppConfig | None = None
+        self._config_path: Path | None = None
     
     def _ensure_config_dir(self) -> None:
         """Ensure configuration directory exists."""
@@ -88,6 +89,7 @@ class ConfigManager:
                 with open(local_config, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 self._config = AppConfig(**data)
+                self._config_path = local_config
                 # Ensure global config dir exists anyway for saving global preferences if needed
                 self._ensure_config_dir()
                 return self._config
@@ -102,12 +104,14 @@ class ConfigManager:
                 with open(self.CONFIG_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 self._config = AppConfig(**data)
+                self._config_path = self.CONFIG_FILE
                 return self._config
             except Exception:
                 pass
         
         # Try to load from environment variables
         self._config = AppConfig()
+        self._config_path = self.CONFIG_FILE
         
         # Override with environment variables if present
         if os.getenv("OPENAI_API_KEY"):
@@ -134,10 +138,14 @@ class ConfigManager:
     
     def save_config(self, config: AppConfig) -> None:
         """Save configuration to file."""
-        self._ensure_config_dir()
         self._config = config
+        target_path = self._config_path or self.CONFIG_FILE
+        if target_path == self.CONFIG_FILE:
+            self._ensure_config_dir()
+        else:
+            target_path.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(self.CONFIG_FILE, "w", encoding="utf-8") as f:
+        with open(target_path, "w", encoding="utf-8") as f:
             json.dump(config.model_dump(), f, indent=2, ensure_ascii=False)
     
     def get_config(self) -> AppConfig:
